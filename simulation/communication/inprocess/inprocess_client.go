@@ -46,6 +46,10 @@ func (client *InprocessClient) beSlowAndPossiblyTimeout(repGuid string) bool {
 	}
 }
 
+func (client *InprocessClient) AZNumber(repGuid string) int {
+	return client.reps[repGuid].AZNumber()
+}
+
 func (client *InprocessClient) TotalResources(repGuid string) auctiontypes.Resources {
 	return client.reps[repGuid].TotalResources()
 }

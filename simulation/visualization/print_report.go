@@ -18,13 +18,14 @@ const greenColor = "\x1b[32m"
 const grayColor = "\x1b[90m"
 
 func PrintReport(
+	numAZs int,
 	client auctiontypes.SimulationRepPoolClient,
 	results []auctiontypes.StartAuctionResult,
 	representatives []string,
 	duration time.Duration,
 	rules auctiontypes.StartAuctionRules,
 ) {
-	fmt.Printf("\nFinished %d Auctions among %d Representatives in %s\n", len(results), len(representatives), duration)
+	fmt.Printf("\nFinished %d Auctions among %d Representatives across %d Availability Zones in %s\n", len(results), len(representatives), numAZs, duration)
 	fmt.Printf("  %#v\n", rules)
 	if _, ok := client.(*inprocess.InprocessClient); ok {
 		fmt.Printf("  Latency Range: %s < %s, Timeout: %s\n", inprocess.LatencyMin, inprocess.LatencyMax, inprocess.Timeout)
@@ -72,36 +73,65 @@ func PrintReport(
 	fmt.Printf("  Min: %.3fms | Max: %.3fms | Total: %.3fms | Mean: %.3fms | Variance: %.3fms\n", waitTimesStats.Min(), waitTimesStats.Max(), waitTimesStats.Sum(), waitTimesStats.Mean(), waitTimesStats.PopulationVariance())
 
 	fmt.Println("\n*** APP STATISTICS ***")
-	excessMaxColocationFactorData := []float64{}
+	excessMaxRepColocationFactorData := []float64{}
+	excessMaxAZColocationFactorData := []float64{}
 
-	maxNumColocatedInstancesForProcess := make(map[string]int)
+	maxNumRepColocatedInstancesForProcess := make(map[string]int)
+	numAZColocatedInstancesForProcess := make(map[string]map[int]int)
 	totalNumInstancesForProcess := make(map[string]int)
+
 	for _, repGuid := range representatives {
-		numColocatedInstancesForProcess := make(map[string]int)
+		azNumber := client.AZNumber(repGuid)
+		numRepColocatedInstancesForProcess := make(map[string]int)
 
 		for _, instance := range client.SimulatedInstances(repGuid) {
-			numColocatedInstancesForProcess[instance.ProcessGuid] += 1
+			numRepColocatedInstancesForProcess[instance.ProcessGuid] += 1
+
+			if numAZColocatedInstancesForProcess[instance.ProcessGuid] == nil {
+				numAZColocatedInstancesForProcess[instance.ProcessGuid] = make(map[int]int)
+			}
+			numAZColocatedInstancesForProcess[instance.ProcessGuid][azNumber] += 1
 		}
 
-		for processGuid, numColocatedInstances := range numColocatedInstancesForProcess {
-			if numColocatedInstances > maxNumColocatedInstancesForProcess[processGuid] {
-				maxNumColocatedInstancesForProcess[processGuid] = numColocatedInstances
+		for processGuid, numRepColocatedInstances := range numRepColocatedInstancesForProcess {
+			if numRepColocatedInstances > maxNumRepColocatedInstancesForProcess[processGuid] {
+				maxNumRepColocatedInstancesForProcess[processGuid] = numRepColocatedInstances
 			}
-			totalNumInstancesForProcess[processGuid] += numColocatedInstances
+			totalNumInstancesForProcess[processGuid] += numRepColocatedInstances
 		}
 	}
-	for processGuid, maxNumColocatedInstances := range maxNumColocatedInstancesForProcess {
-		expectedMaxNumColocatedInstances := math.Ceil(float64(totalNumInstancesForProcess[processGuid]) / float64(len(representatives)))
-		excessMaxColocationFactorData = append(
-			excessMaxColocationFactorData,
-			float64(maxNumColocatedInstances)/expectedMaxNumColocatedInstances,
+
+	for processGuid, maxNumRepColocatedInstances := range maxNumRepColocatedInstancesForProcess {
+		expectedMaxNumRepColocatedInstances := math.Ceil(float64(totalNumInstancesForProcess[processGuid]) / float64(len(representatives)))
+		excessMaxRepColocationFactorData = append(
+			excessMaxRepColocationFactorData,
+			float64(maxNumRepColocatedInstances)/expectedMaxNumRepColocatedInstances,
 		)
 	}
 
-	fmt.Println("\nExcess Colocation Factors")
-	excessMaxColocationFactorStats := stats.Stats{}
-	excessMaxColocationFactorStats.UpdateArray(excessMaxColocationFactorData)
-	fmt.Printf("  Min: %.4f | Max: %.4f | Mean: %.4f | Variance: %.4f\n", excessMaxColocationFactorStats.Min(), excessMaxColocationFactorStats.Max(), excessMaxColocationFactorStats.Mean(), excessMaxColocationFactorStats.PopulationVariance())
+	for processGuid, numColocatedInstancesForAZ := range numAZColocatedInstancesForProcess {
+		expectedMaxNumAZColocatedInstances := math.Ceil(float64(totalNumInstancesForProcess[processGuid]) / float64(numAZs))
+		maxNumAZColocatedInstances := 0
+		for _, numColocatedInstances := range numColocatedInstancesForAZ {
+			if numColocatedInstances > maxNumAZColocatedInstances {
+				maxNumAZColocatedInstances = numColocatedInstances
+			}
+		}
+		excessMaxAZColocationFactorData = append(
+			excessMaxAZColocationFactorData,
+			float64(maxNumAZColocatedInstances)/expectedMaxNumAZColocatedInstances,
+		)
+	}
+
+	fmt.Println("\nExcess Rep Colocation Factors")
+	excessMaxRepColocationFactorStats := stats.Stats{}
+	excessMaxRepColocationFactorStats.UpdateArray(excessMaxRepColocationFactorData)
+	fmt.Printf("  Min: %.4f | Max: %.4f | Mean: %.4f | Variance: %.4f\n", excessMaxRepColocationFactorStats.Min(), excessMaxRepColocationFactorStats.Max(), excessMaxRepColocationFactorStats.Mean(), excessMaxRepColocationFactorStats.PopulationVariance())
+
+	fmt.Println("\nExcess AZ Colocation Factors")
+	excessMaxAZColocationFactorStats := stats.Stats{}
+	excessMaxAZColocationFactorStats.UpdateArray(excessMaxAZColocationFactorData)
+	fmt.Printf("  Min: %.4f | Max: %.4f | Mean: %.4f | Variance: %.4f\n", excessMaxAZColocationFactorStats.Min(), excessMaxAZColocationFactorStats.Max(), excessMaxAZColocationFactorStats.Mean(), excessMaxAZColocationFactorStats.PopulationVariance())
 
 	fmt.Println("\n*** REP STATISTICS ***")
 	memoryData := []float64{}

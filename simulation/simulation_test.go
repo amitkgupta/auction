@@ -119,6 +119,7 @@ var _ = Describe("Start and Stop Auctions", func() {
 						)
 
 						visualization.PrintReport(
+							numAZs,
 							client,
 							report.AuctionResults,
 							repGuids[:nexec[i]],
@@ -194,6 +195,7 @@ var _ = Describe("Start and Stop Auctions", func() {
 						)
 
 						visualization.PrintReport(
+							numAZs,
 							client,
 							report.AuctionResults,
 							repGuids[:nexec[i]],
@@ -236,6 +238,7 @@ var _ = Describe("Start and Stop Auctions", func() {
 						)
 
 						visualization.PrintReport(
+							numAZs,
 							client,
 							report.AuctionResults,
 							repGuids[:nexec[i]],

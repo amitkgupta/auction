@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"os/exec"
 	"strings"
 
@@ -62,6 +63,8 @@ var natsRunner *natsrunner.NATSRunner
 var client auctiontypes.SimulationRepPoolClient
 var repGuids []string
 
+var numAZs int
+
 var disableSVGReport bool
 
 func init() {
@@ -75,6 +78,8 @@ func init() {
 	flag.Float64Var(&(auctionrunner.DefaultStartAuctionRules.MaxBiddingPoolFraction), "maxBiddingPoolFraction", auctionrunner.DefaultStartAuctionRules.MaxBiddingPoolFraction, "the maximum number of participants in the pool")
 
 	flag.IntVar(&maxConcurrent, "maxConcurrent", 20, "the maximum number of concurrent auctions to run")
+
+	flag.IntVar(&numAZs, "numAZs", 5, "the number of availability zones or clusters to distribute the executors across")
 
 	flag.BoolVar(&disableSVGReport, "disableSVGReport", false, "disable displaying SVG reports of the simulation runs")
 }
@@ -161,7 +166,10 @@ func buildInProcessReps() (auctiontypes.SimulationRepPoolClient, []string) {
 		repGuid := util.NewGuid("REP")
 		repGuids = append(repGuids, repGuid)
 
-		repDelegate := simulationrepdelegate.New(repResources)
+		repDelegate := simulationrepdelegate.New(
+			repResources,
+			int(math.Mod(float64(numReps), float64(numAZs))),
+		)
 		repMap[repGuid] = auctionrep.New(repGuid, repDelegate)
 	}
 

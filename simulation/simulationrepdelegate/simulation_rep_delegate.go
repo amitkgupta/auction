@@ -13,15 +13,21 @@ type SimulationRepDelegate struct {
 	lock           *sync.Mutex
 	instances      map[string]auctiontypes.SimulatedInstance
 	totalResources auctiontypes.Resources
+	azNumber       int
 }
 
-func New(totalResources auctiontypes.Resources) auctiontypes.SimulationAuctionRepDelegate {
+func New(totalResources auctiontypes.Resources, azNumber int) auctiontypes.SimulationAuctionRepDelegate {
 	return &SimulationRepDelegate{
 		totalResources: totalResources,
+		azNumber:       azNumber,
 
 		lock:      &sync.Mutex{},
 		instances: map[string]auctiontypes.SimulatedInstance{},
 	}
+}
+
+func (rep *SimulationRepDelegate) AZNumber() int {
+	return rep.azNumber
 }
 
 func (rep *SimulationRepDelegate) RemainingResources() (auctiontypes.Resources, error) {

@@ -68,6 +68,7 @@ type AuctionRepDelegate interface {
 	TotalResources() (Resources, error)
 	NumInstancesForProcessGuid(processGuid string) (int, error)
 	InstanceGuidsForProcessGuidAndIndex(processGuid string, index int) ([]string, error)
+	AZNumber() int
 
 	Reserve(startAuctionInfo StartAuctionInfo) error
 	ReleaseReservation(startAuctionInfo StartAuctionInfo) error
@@ -83,6 +84,7 @@ type SimulationRepPoolClient interface {
 	SimulatedInstances(repGuid string) []SimulatedInstance
 	SetSimulatedInstances(repGuid string, instances []SimulatedInstance)
 	Reset(repGuid string)
+	AZNumber(repGuid string) int
 }
 
 //simulation-only interface

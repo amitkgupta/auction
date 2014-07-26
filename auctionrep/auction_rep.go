@@ -37,6 +37,10 @@ func (rep *AuctionRep) Guid() string {
 	return rep.repGuid
 }
 
+func (rep *AuctionRep) AZNumber() int {
+	return rep.delegate.AZNumber()
+}
+
 // must lock here; the publicly visible operations should be atomic
 func (rep *AuctionRep) BidForStartAuction(startAuctionInfo auctiontypes.StartAuctionInfo) (float64, error) {
 	rep.lock.Lock()
