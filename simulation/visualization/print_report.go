@@ -15,11 +15,7 @@ const defaultStyle = "\x1b[0m"
 const boldStyle = "\x1b[1m"
 const redColor = "\x1b[91m"
 const greenColor = "\x1b[32m"
-const yellowColor = "\x1b[33m"
-const cyanColor = "\x1b[36m"
 const grayColor = "\x1b[90m"
-const lightGrayColor = "\x1b[37m"
-const purpleColor = "\x1b[35m"
 
 func PrintReport(
 	client auctiontypes.SimulationRepPoolClient,
@@ -131,8 +127,6 @@ func PrintReport(
 		memory, disk := 0, 0
 		containersData = append(containersData, float64(len(instances)))
 
-		availableColors := []string{"red", "cyan", "yellow", "gray", "purple", "green"}
-		colorLookup := map[string]string{"red": redColor, "green": greenColor, "cyan": cyanColor, "yellow": yellowColor, "gray": lightGrayColor, "purple": purpleColor}
 		originalCounts := map[string]int{}
 		newCounts := map[string]int{}
 
@@ -141,7 +135,7 @@ func PrintReport(
 			disk += instance.DiskMB
 
 			key := "green"
-			if _, ok := colorLookup[instance.ProcessGuid]; ok {
+			if instance.ProcessGuid == "red" {
 				key = instance.ProcessGuid
 			}
 			if auctionedInstances[instance.InstanceGuid] {
@@ -156,10 +150,10 @@ func PrintReport(
 		diskData = append(diskData, float64(disk))
 
 		instanceString := ""
-		for _, col := range availableColors {
-			instanceString += strings.Repeat(colorLookup[col]+"○"+defaultStyle, originalCounts[col])
-			instanceString += strings.Repeat(colorLookup[col]+"●"+defaultStyle, newCounts[col])
-		}
+		instanceString += strings.Repeat(greenColor+"○"+defaultStyle, originalCounts["green"])
+		instanceString += strings.Repeat(redColor+"○"+defaultStyle, originalCounts["red"])
+		instanceString += strings.Repeat(greenColor+"●"+defaultStyle, newCounts["green"])
+		instanceString += strings.Repeat(redColor+"●"+defaultStyle, newCounts["red"])
 		instanceString += strings.Repeat(grayColor+"○"+defaultStyle, client.TotalResources(repGuid).Containers-len(instances))
 
 		containerHistogramLines = append(containerHistogramLines, fmt.Sprintf("  %s: %s", fmt.Sprintf(guidFormat, repGuid), instanceString))

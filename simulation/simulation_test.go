@@ -1,6 +1,8 @@
 package simulation_test
 
 import (
+	"fmt"
+
 	"github.com/cloudfoundry-incubator/auction/auctionrunner"
 	"github.com/cloudfoundry-incubator/auction/auctiontypes"
 	"github.com/cloudfoundry-incubator/auction/simulation/visualization"
@@ -12,7 +14,7 @@ import (
 
 var _ = Ω
 
-var _ = Describe("Auction", func() {
+var _ = Describe("Start and Stop Auctions", func() {
 	var initialDistributions map[int][]auctiontypes.SimulatedInstance
 
 	newSimulatedInstance := func(processGuid string, index int, memoryMB int) auctiontypes.SimulatedInstance {
@@ -25,15 +27,15 @@ var _ = Describe("Auction", func() {
 		}
 	}
 
-	generateUniqueSimulatedInstances := func(numInstances int, index int, memoryMB int) []auctiontypes.SimulatedInstance {
+	generateUniqueSingleIndexLRPsWithRedundantSimulatedInstances := func(numInstances int, memoryMB int) []auctiontypes.SimulatedInstance {
 		instances := []auctiontypes.SimulatedInstance{}
 		for i := 0; i < numInstances; i++ {
-			instances = append(instances, newSimulatedInstance(util.NewGrayscaleGuid("AAA"), index, memoryMB))
+			instances = append(instances, newSimulatedInstance(util.NewGrayscaleGuid("AAA"), 0, memoryMB))
 		}
 		return instances
 	}
 
-	generateSimulatedInstancesForProcessGuid := func(processGuid string, numInstances int, index int, memoryMB int) []auctiontypes.SimulatedInstance {
+	generateSimulatedInstancesForProcessGuidIndex := func(processGuid string, numInstances int, index int, memoryMB int) []auctiontypes.SimulatedInstance {
 		instances := []auctiontypes.SimulatedInstance{}
 		for i := 0; i < numInstances; i++ {
 			instances = append(instances, newSimulatedInstance(processGuid, index, memoryMB))
@@ -41,40 +43,31 @@ var _ = Describe("Auction", func() {
 		return instances
 	}
 
-	newLRPStartAuction := func(processGuid string, memoryMB int) models.LRPStartAuction {
+	newLRPStartAuction := func(processGuid string, memoryMB int, index int) models.LRPStartAuction {
 		return models.LRPStartAuction{
 			ProcessGuid:  processGuid,
 			InstanceGuid: util.NewGuid("INS"),
 			MemoryMB:     memoryMB,
 			DiskMB:       1,
-			Index:        0,
+			Index:        index,
 		}
-	}
-
-	generateUniqueLRPStartAuctions := func(numInstances int, memoryMB int) []models.LRPStartAuction {
-		instances := []models.LRPStartAuction{}
-		for i := 0; i < numInstances; i++ {
-			instances = append(instances, newLRPStartAuction(util.NewGrayscaleGuid("BBB"), memoryMB))
-		}
-		return instances
-	}
-
-	randomSVGColor := func() string {
-		return []string{"purple", "red", "cyan", "teal", "gray", "blue", "pink", "green", "lime", "orange", "lightseagreen", "brown"}[util.R.Intn(12)]
-	}
-
-	generateLRPStartAuctionsWithRandomSVGColors := func(numInstances int, memoryMB int) []models.LRPStartAuction {
-		instances := []models.LRPStartAuction{}
-		for i := 0; i < numInstances; i++ {
-			instances = append(instances, newLRPStartAuction(randomSVGColor(), memoryMB))
-		}
-		return instances
 	}
 
 	generateLRPStartAuctionsForProcessGuid := func(numInstances int, processGuid string, memoryMB int) []models.LRPStartAuction {
 		instances := []models.LRPStartAuction{}
 		for i := 0; i < numInstances; i++ {
-			instances = append(instances, newLRPStartAuction(processGuid, memoryMB))
+			instances = append(instances, newLRPStartAuction(processGuid, memoryMB, i))
+		}
+		return instances
+	}
+
+	generateUniqueLRPStartAuctions := func(numLRPs int, memoryMB int, numInstancesPerLRP int) []models.LRPStartAuction {
+		instances := []models.LRPStartAuction{}
+		for i := 0; i < numLRPs; i++ {
+			instances = append(
+				instances,
+				generateLRPStartAuctionsForProcessGuid(numInstancesPerLRP, util.NewGrayscaleGuid("BBB"), memoryMB)...,
+			)
 		}
 		return instances
 	}
@@ -90,24 +83,28 @@ var _ = Describe("Auction", func() {
 		}
 	})
 
-	Describe("Experiments", func() {
-		Context("Cold start scenario", func() {
+	Describe("Start Auction Simulations", func() {
+		Context("With no process running on any executor initially", func() {
 			nexec := []int{25, 100}
-			n1apps := []int{1800, 7000}
-			n2apps := []int{200, 1000}
-			n4apps := []int{50, 200}
+
+			n1MBapps := []int{1800, 7000}
+			n2MBapps := []int{200, 1000}
+			n4MBapps := []int{50, 200}
+
+			n1INSTapps := []int{1800, 7000}
+			n2INSTapps := []int{200, 1000}
+			n4INSTapps := []int{50, 200}
+
 			for i := range nexec {
 				i := i
+
 				Context("with variable memory requirements between apps", func() {
 					It("should distribute evenly", func() {
 						instances := []models.LRPStartAuction{}
 
-						instances = append(instances, generateUniqueLRPStartAuctions(n1apps[i]/2, 1)...)
-						instances = append(instances, generateLRPStartAuctionsWithRandomSVGColors(n1apps[i]/2, 1)...)
-						instances = append(instances, generateUniqueLRPStartAuctions(n2apps[i]/2, 2)...)
-						instances = append(instances, generateLRPStartAuctionsWithRandomSVGColors(n2apps[i]/2, 2)...)
-						instances = append(instances, generateUniqueLRPStartAuctions(n4apps[i]/2, 4)...)
-						instances = append(instances, generateLRPStartAuctionsWithRandomSVGColors(n4apps[i]/2, 4)...)
+						instances = append(instances, generateUniqueLRPStartAuctions(n1MBapps[i], 1, 1)...)
+						instances = append(instances, generateUniqueLRPStartAuctions(n2MBapps[i], 2, 1)...)
+						instances = append(instances, generateUniqueLRPStartAuctions(n4MBapps[i], 4, 1)...)
 
 						permutedInstances := make([]models.LRPStartAuction, len(instances))
 						for i, index := range util.R.Perm(len(instances)) {
@@ -133,25 +130,60 @@ var _ = Describe("Auction", func() {
 						reports = append(reports, report)
 					})
 				})
+
+				Context("with variable instance requirements between apps", func() {
+					It("should distribute evenly", func() {
+						instances := []models.LRPStartAuction{}
+
+						instances = append(instances, generateUniqueLRPStartAuctions(n1INSTapps[i], 1, 1)...)
+						instances = append(instances, generateUniqueLRPStartAuctions(n2INSTapps[i], 1, 2)...)
+						instances = append(instances, generateUniqueLRPStartAuctions(n4INSTapps[i], 1, 4)...)
+
+						permutedInstances := make([]models.LRPStartAuction, len(instances))
+						for i, index := range util.R.Perm(len(instances)) {
+							permutedInstances[i] = instances[index]
+						}
+						report := auctionDistributor.HoldAuctionsFor(
+							"Cold start with variable instance requirements between apps",
+							nexec[i],
+							permutedInstances,
+							repGuids[:nexec[i]],
+							auctionrunner.DefaultStartAuctionRules,
+						)
+
+						visualization.PrintReport(
+							numAZs,
+							client,
+							report.AuctionResults,
+							repGuids[:nexec[i]],
+							report.AuctionDuration,
+							auctionrunner.DefaultStartAuctionRules,
+						)
+
+						svgReport.DrawReportCard(i, 0, report)
+						reports = append(reports, report)
+					})
+				})
 			}
 		})
 
-		Context("Imbalanced scenario (e.g. a deploy)", func() {
+		Context("With some executors empty, and the remaining executors running many perfectly-balanced process instances", func() {
 			nexec := []int{100, 100}
 			nempty := []int{5, 1}
 			napps := []int{500, 100}
 
 			for i := range nexec {
 				i := i
-				Context("scenario", func() {
+
+				Context(fmt.Sprintf("%d Executors, %d Initially Empty, %d Process", nexec[i], nempty[i], napps[i]), func() {
 					BeforeEach(func() {
 						for j := 0; j < nexec[i]-nempty[i]; j++ {
-							initialDistributions[j] = generateUniqueSimulatedInstances(50, 0, 1)
+							initialDistributions[j] = generateUniqueSingleIndexLRPsWithRedundantSimulatedInstances(50, 1)
 						}
 					})
 
 					It("should distribute evenly", func() {
-						instances := generateUniqueLRPStartAuctions(napps[i], 1)
+						instances := generateUniqueLRPStartAuctions(napps[i], 1, 1)
 
 						report := auctionDistributor.HoldAuctionsFor(
 							"Imbalanced scenario (e.g. a deploy)",
@@ -176,17 +208,19 @@ var _ = Describe("Auction", func() {
 			}
 		})
 
-		Context("The Watters demo", func() {
+		Context("With all executors running well-balanced process instances", func() {
 			nexec := []int{30, 100}
 			napps := []int{200, 400}
+			maxInitialProcessesPerExecutor := 80
 
 			for i := range nexec {
 				i := i
 
-				Context("scenario", func() {
+				Context(fmt.Sprintf("%d Executors, roughly %d Initial Processes per Executor, %d New Processes", nexec[i], maxInitialProcessesPerExecutor, napps[i]), func() {
 					BeforeEach(func() {
 						for j := 0; j < nexec[i]; j++ {
-							initialDistributions[j] = generateUniqueSimulatedInstances(util.RandomIntIn(78, 80), 0, 1)
+							numInstances := util.RandomIntIn(maxInitialProcessesPerExecutor-2, maxInitialProcessesPerExecutor)
+							initialDistributions[j] = generateUniqueSingleIndexLRPsWithRedundantSimulatedInstances(numInstances, 1)
 						}
 					})
 
@@ -215,17 +249,19 @@ var _ = Describe("Auction", func() {
 				})
 			}
 		})
+	})
 
-		Context("Stop Auctions", func() {
+	Describe("Stop Auctions Specifications", func() {
+		Describe("When more than one instance is running for a particular index of a process", func() {
 			processGuid := util.NewGrayscaleGuid("AAA")
 
-			Context("when there are duplicate instances on executors with disaparate resource availabilities", func() {
+			Context("when the redundant instances are on executors with different amounts of available resources", func() {
 				BeforeEach(func() {
-					initialDistributions[0] = generateUniqueSimulatedInstances(50, 0, 1)
-					initialDistributions[0] = append(initialDistributions[0], generateSimulatedInstancesForProcessGuid(processGuid, 1, 0, 1)...)
+					initialDistributions[0] = generateUniqueSingleIndexLRPsWithRedundantSimulatedInstances(50, 1)
+					initialDistributions[0] = append(initialDistributions[0], generateSimulatedInstancesForProcessGuidIndex(processGuid, 1, 0, 1)...)
 
-					initialDistributions[1] = generateUniqueSimulatedInstances(30, 0, 1)
-					initialDistributions[1] = append(initialDistributions[1], generateSimulatedInstancesForProcessGuid(processGuid, 1, 0, 1)...)
+					initialDistributions[1] = generateUniqueSingleIndexLRPsWithRedundantSimulatedInstances(30, 1)
+					initialDistributions[1] = append(initialDistributions[1], generateSimulatedInstancesForProcessGuidIndex(processGuid, 1, 0, 1)...)
 				})
 
 				It("should favor removing the instance from the heavy-laden executor", func() {
@@ -248,17 +284,17 @@ var _ = Describe("Auction", func() {
 				})
 			})
 
-			Context("when the executor with more available resources already has another instance of the app running", func() {
+			Context("when one redundant instance is on an executor with fewer resources, and the other redundant instance is on an executor running another index of the process", func() {
 				BeforeEach(func() {
-					initialDistributions[0] = generateUniqueSimulatedInstances(50, 0, 1)
-					initialDistributions[0] = append(initialDistributions[0], generateSimulatedInstancesForProcessGuid(processGuid, 1, 0, 1)...)
+					initialDistributions[0] = generateUniqueSingleIndexLRPsWithRedundantSimulatedInstances(50, 1)
+					initialDistributions[0] = append(initialDistributions[0], generateSimulatedInstancesForProcessGuidIndex(processGuid, 1, 0, 1)...)
 
-					initialDistributions[1] = generateUniqueSimulatedInstances(30, 0, 1)
-					initialDistributions[1] = append(initialDistributions[1], generateSimulatedInstancesForProcessGuid(processGuid, 1, 0, 1)...)
-					initialDistributions[1] = append(initialDistributions[1], generateSimulatedInstancesForProcessGuid(processGuid, 1, 1, 1)...)
+					initialDistributions[1] = generateUniqueSingleIndexLRPsWithRedundantSimulatedInstances(30, 1)
+					initialDistributions[1] = append(initialDistributions[1], generateSimulatedInstancesForProcessGuidIndex(processGuid, 1, 0, 1)...)
+					initialDistributions[1] = append(initialDistributions[1], generateSimulatedInstancesForProcessGuidIndex(processGuid, 1, 1, 1)...)
 				})
 
-				It("should favor leaving the instance on the more heavy-laden executor", func() {
+				It("should favor removing the redundant instance from the executor running the additional index of the process", func() {
 					stopAuctions := []models.LRPStopAuction{
 						{
 							ProcessGuid: processGuid,
@@ -278,16 +314,16 @@ var _ = Describe("Auction", func() {
 				})
 			})
 
-			Context("when the executor with fewer available resources has two instances running", func() {
+			Context("when the executor with fewer available resources is running more of the redundant instances", func() {
 				BeforeEach(func() {
-					initialDistributions[0] = generateUniqueSimulatedInstances(50, 0, 1)
-					initialDistributions[0] = append(initialDistributions[0], generateSimulatedInstancesForProcessGuid(processGuid, 1, 0, 1)...)
+					initialDistributions[0] = generateUniqueSingleIndexLRPsWithRedundantSimulatedInstances(50, 1)
+					initialDistributions[0] = append(initialDistributions[0], generateSimulatedInstancesForProcessGuidIndex(processGuid, 1, 0, 1)...)
 
-					initialDistributions[1] = generateUniqueSimulatedInstances(30, 0, 1)
-					initialDistributions[1] = append(initialDistributions[1], generateSimulatedInstancesForProcessGuid(processGuid, 2, 0, 1)...)
+					initialDistributions[1] = generateUniqueSingleIndexLRPsWithRedundantSimulatedInstances(30, 1)
+					initialDistributions[1] = append(initialDistributions[1], generateSimulatedInstancesForProcessGuidIndex(processGuid, 2, 0, 1)...)
 				})
 
-				It("should favor removing the instance from the heavy-laden executor", func() {
+				It("should stop all but one instance, keeping that one instance on the executor with more free resources", func() {
 					stopAuctions := []models.LRPStopAuction{
 						{
 							ProcessGuid: processGuid,
@@ -307,19 +343,19 @@ var _ = Describe("Auction", func() {
 				})
 			})
 
-			Context("when there are very many duplicate instances out there", func() {
+			Context("when there are very many redundant instances out there, and the executors initially have the same amount of free resources", func() {
 				BeforeEach(func() {
-					initialDistributions[0] = generateSimulatedInstancesForProcessGuid(processGuid, 50, 0, 1)
-					initialDistributions[0] = append(initialDistributions[0], generateSimulatedInstancesForProcessGuid(processGuid, 90-50, 1, 1)...)
+					initialDistributions[0] = generateSimulatedInstancesForProcessGuidIndex(processGuid, 50, 0, 1)
+					initialDistributions[0] = append(initialDistributions[0], generateSimulatedInstancesForProcessGuidIndex(processGuid, 90-50, 1, 1)...)
 
-					initialDistributions[1] = generateSimulatedInstancesForProcessGuid(processGuid, 30, 0, 1)
-					initialDistributions[1] = append(initialDistributions[1], generateSimulatedInstancesForProcessGuid(processGuid, 90-30, 1, 1)...)
+					initialDistributions[1] = generateSimulatedInstancesForProcessGuidIndex(processGuid, 30, 0, 1)
+					initialDistributions[1] = append(initialDistributions[1], generateSimulatedInstancesForProcessGuidIndex(processGuid, 90-30, 1, 1)...)
 
-					initialDistributions[2] = generateSimulatedInstancesForProcessGuid(processGuid, 70, 0, 1)
-					initialDistributions[2] = append(initialDistributions[2], generateSimulatedInstancesForProcessGuid(processGuid, 90-70, 1, 1)...)
+					initialDistributions[2] = generateSimulatedInstancesForProcessGuidIndex(processGuid, 70, 0, 1)
+					initialDistributions[2] = append(initialDistributions[2], generateSimulatedInstancesForProcessGuidIndex(processGuid, 90-70, 1, 1)...)
 				})
 
-				It("should stop all but 1", func() {
+				It("should stop all but one instance, keeping that one instance on the executor that ends up with the most free resources", func() {
 					stopAuctions := []models.LRPStopAuction{
 						{
 							ProcessGuid: processGuid,
