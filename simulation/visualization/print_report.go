@@ -31,7 +31,7 @@ func PrintReport(
 		fmt.Printf("  Latency Range: %s < %s, Timeout: %s\n", inprocess.LatencyMin, inprocess.LatencyMax, inprocess.Timeout)
 	}
 
-	fmt.Println("\n*** AUCTION STATISTICS ***")
+	fmt.Println("\n*** Auction Statistics ***")
 	roundsData := []float64{}
 	roundsDistribution := map[int]int{}
 	communicationsData := []float64{}
@@ -49,8 +49,8 @@ func PrintReport(
 	fmt.Println("\nNumber of Rounds")
 	roundsStats := stats.Stats{}
 	roundsStats.UpdateArray(roundsData)
-	fmt.Printf("  Min: %.0f | Max: %.0f | Total: %.0f | Mean: %.2f | Variance: %.2f\n", roundsStats.Min(), roundsStats.Max(), roundsStats.Sum(), roundsStats.Mean(), roundsStats.PopulationVariance())
-	fmt.Println("  Distribution:")
+	fmt.Printf("  Min: %.0f | Max: %.0f | Total: %.0f | Mean: %.2f | Variance: %.2f", roundsStats.Min(), roundsStats.Max(), roundsStats.Sum(), roundsStats.Mean(), roundsStats.PopulationVariance())
+	fmt.Println("\n  Distribution:")
 	for i := 1; i <= rules.MaxRounds; i++ {
 		if roundsDistribution[i] > 0 {
 			fmt.Printf("  %2d: %s\n", i, strings.Repeat("■", roundsDistribution[i]))
@@ -60,19 +60,19 @@ func PrintReport(
 	fmt.Println("\nNumber of Communications")
 	communicationsStats := stats.Stats{}
 	communicationsStats.UpdateArray(communicationsData)
-	fmt.Printf("  Min: %.0f | Max: %.0f | Total: %.0f | Mean: %.2f | Variance: %.2f\n", communicationsStats.Min(), communicationsStats.Max(), communicationsStats.Sum(), communicationsStats.Mean(), communicationsStats.PopulationVariance())
+	fmt.Printf("  Min: %.0f | Max: %.0f | Total: %.0f | Mean: %.2f | Variance: %.2f", communicationsStats.Min(), communicationsStats.Max(), communicationsStats.Sum(), communicationsStats.Mean(), communicationsStats.PopulationVariance())
 
 	fmt.Println("\nBidding Times")
 	biddingTimesStats := stats.Stats{}
 	biddingTimesStats.UpdateArray(biddingTimesData)
-	fmt.Printf("  Min: %.3fms | Max: %.3fms | Total: %.3fms | Mean: %.3fms | Variance: %.3fms\n", biddingTimesStats.Min(), biddingTimesStats.Max(), biddingTimesStats.Sum(), biddingTimesStats.Mean(), biddingTimesStats.PopulationVariance())
+	fmt.Printf("  Min: %.3fms | Max: %.3fms | Total: %.3fms | Mean: %.3fms | Variance: %.3fms", biddingTimesStats.Min(), biddingTimesStats.Max(), biddingTimesStats.Sum(), biddingTimesStats.Mean(), biddingTimesStats.PopulationVariance())
 
 	fmt.Println("\nWait Times")
 	waitTimesStats := stats.Stats{}
 	waitTimesStats.UpdateArray(waitTimesData)
-	fmt.Printf("  Min: %.3fms | Max: %.3fms | Total: %.3fms | Mean: %.3fms | Variance: %.3fms\n", waitTimesStats.Min(), waitTimesStats.Max(), waitTimesStats.Sum(), waitTimesStats.Mean(), waitTimesStats.PopulationVariance())
+	fmt.Printf("  Min: %.3fms | Max: %.3fms | Total: %.3fms | Mean: %.3fms | Variance: %.3fms", waitTimesStats.Min(), waitTimesStats.Max(), waitTimesStats.Sum(), waitTimesStats.Mean(), waitTimesStats.PopulationVariance())
 
-	fmt.Println("\n*** APP STATISTICS ***")
+	fmt.Println("\n*** App Statistics ***")
 	excessMaxRepColocationFactorData := []float64{}
 	excessMaxAZColocationFactorData := []float64{}
 
@@ -126,14 +126,14 @@ func PrintReport(
 	fmt.Println("\nExcess Rep Colocation Factors")
 	excessMaxRepColocationFactorStats := stats.Stats{}
 	excessMaxRepColocationFactorStats.UpdateArray(excessMaxRepColocationFactorData)
-	fmt.Printf("  Min: %.4f | Max: %.4f | Mean: %.4f | Variance: %.4f\n", excessMaxRepColocationFactorStats.Min(), excessMaxRepColocationFactorStats.Max(), excessMaxRepColocationFactorStats.Mean(), excessMaxRepColocationFactorStats.PopulationVariance())
+	fmt.Printf("  Min: %.4f | Max: %.4f | Mean: %.4f | Variance: %.4f", excessMaxRepColocationFactorStats.Min(), excessMaxRepColocationFactorStats.Max(), excessMaxRepColocationFactorStats.Mean(), excessMaxRepColocationFactorStats.PopulationVariance())
 
 	fmt.Println("\nExcess AZ Colocation Factors")
 	excessMaxAZColocationFactorStats := stats.Stats{}
 	excessMaxAZColocationFactorStats.UpdateArray(excessMaxAZColocationFactorData)
-	fmt.Printf("  Min: %.4f | Max: %.4f | Mean: %.4f | Variance: %.4f\n", excessMaxAZColocationFactorStats.Min(), excessMaxAZColocationFactorStats.Max(), excessMaxAZColocationFactorStats.Mean(), excessMaxAZColocationFactorStats.PopulationVariance())
+	fmt.Printf("  Min: %.4f | Max: %.4f | Mean: %.4f | Variance: %.4f", excessMaxAZColocationFactorStats.Min(), excessMaxAZColocationFactorStats.Max(), excessMaxAZColocationFactorStats.Mean(), excessMaxAZColocationFactorStats.PopulationVariance())
 
-	fmt.Println("\n*** REP STATISTICS ***")
+	fmt.Println("\n*** Rep Statistics ***")
 	memoryData := []float64{}
 	diskData := []float64{}
 	containersData := []float64{}
@@ -192,18 +192,18 @@ func PrintReport(
 	fmt.Println("\nUsed Memory")
 	memoryStats := stats.Stats{}
 	memoryStats.UpdateArray(memoryData)
-	fmt.Printf("  Min: %.0f | Max: %.0f | Total: %.0f | Mean: %.2f | Variance: %.2f\n", memoryStats.Min(), memoryStats.Max(), memoryStats.Sum(), memoryStats.Mean(), memoryStats.PopulationVariance())
+	fmt.Printf("  Min: %.0f | Max: %.0f | Total: %.0f | Mean: %.2f | Variance: %.2f", memoryStats.Min(), memoryStats.Max(), memoryStats.Sum(), memoryStats.Mean(), memoryStats.PopulationVariance())
 
 	fmt.Println("\nUsed Disk")
 	diskStats := stats.Stats{}
 	diskStats.UpdateArray(diskData)
-	fmt.Printf("  Min: %.0f | Max: %.0f | Total: %.0f | Mean: %.2f | Variance: %.2f\n", diskStats.Min(), diskStats.Max(), diskStats.Sum(), diskStats.Mean(), diskStats.PopulationVariance())
+	fmt.Printf("  Min: %.0f | Max: %.0f | Total: %.0f | Mean: %.2f | Variance: %.2f", diskStats.Min(), diskStats.Max(), diskStats.Sum(), diskStats.Mean(), diskStats.PopulationVariance())
 
 	fmt.Println("\nNumber of Running Containers")
 	containersStats := stats.Stats{}
 	containersStats.UpdateArray(containersData)
-	fmt.Printf("  Min: %.0f | Max: %.0f | Total: %.0f | Mean: %.2f | Variance: %.2f\n", containersStats.Min(), containersStats.Max(), containersStats.Sum(), containersStats.Mean(), containersStats.PopulationVariance())
-	fmt.Println("  Distribution:")
+	fmt.Printf("  Min: %.0f | Max: %.0f | Total: %.0f | Mean: %.2f | Variance: %.2f", containersStats.Min(), containersStats.Max(), containersStats.Sum(), containersStats.Mean(), containersStats.PopulationVariance())
+	fmt.Println("\n  Distribution:")
 	for _, histogramLine := range containerHistogramLines {
 		fmt.Println(histogramLine)
 	}

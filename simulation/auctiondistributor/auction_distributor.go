@@ -51,7 +51,7 @@ func (ad *AuctionDistributor) HoldAuctionsFor(
 	representatives []string,
 	rules auctiontypes.StartAuctionRules,
 ) *visualization.Report {
-	fmt.Printf("\nStarting Auctions: '%s' on %d Executors\n\n", scenarioDescription, numRepresentatives)
+	fmt.Printf("\nSTARTING AUCTIONS: '%s' on %d Executors\n\n", scenarioDescription, numRepresentatives)
 	bar := pb.StartNew(len(instances))
 
 	t := time.Now()
