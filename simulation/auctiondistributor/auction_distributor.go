@@ -11,8 +11,8 @@ import (
 	"github.com/cloudfoundry-incubator/runtime-schema/models"
 )
 
-type StartAuctionCommunicator func(auctiontypes.StartAuctionRequest) (auctiontypes.StartAuctionResult, error)
-type StopAuctionCommunicator func(auctiontypes.StopAuctionRequest) (auctiontypes.StopAuctionResult, error)
+type StartAuctionCommunicator func(auctiontypes.StartAuctionRequest) auctiontypes.StartAuctionResult
+type StopAuctionCommunicator func(auctiontypes.StopAuctionRequest) auctiontypes.StopAuctionResult
 
 type AuctionDistributor struct {
 	client            auctiontypes.SimulationRepPoolClient
@@ -26,10 +26,10 @@ func NewInProcessAuctionDistributor(client auctiontypes.SimulationRepPoolClient,
 	return &AuctionDistributor{
 		client:        client,
 		maxConcurrent: maxConcurrent,
-		startCommunicator: func(auctionRequest auctiontypes.StartAuctionRequest) (auctiontypes.StartAuctionResult, error) {
+		startCommunicator: func(auctionRequest auctiontypes.StartAuctionRequest) auctiontypes.StartAuctionResult {
 			return auctionRunner.RunLRPStartAuction(auctionRequest)
 		},
-		stopCommunicator: func(auctionRequest auctiontypes.StopAuctionRequest) (auctiontypes.StopAuctionResult, error) {
+		stopCommunicator: func(auctionRequest auctiontypes.StopAuctionRequest) auctiontypes.StopAuctionResult {
 			return auctionRunner.RunLRPStopAuction(auctionRequest)
 		},
 	}
@@ -60,7 +60,7 @@ func (ad *AuctionDistributor) HoldAuctionsFor(
 	for _, inst := range instances {
 		go func(inst models.LRPStartAuction) {
 			semaphore <- true
-			result, _ := ad.startCommunicator(auctiontypes.StartAuctionRequest{
+			result := ad.startCommunicator(auctiontypes.StartAuctionRequest{
 				LRPStartAuction: inst,
 				RepGuids:        representatives,
 				Rules:           rules,
@@ -96,7 +96,7 @@ func (ad *AuctionDistributor) HoldStopAuctions(stopAuctions []models.LRPStopAuct
 	c := make(chan auctiontypes.StopAuctionResult)
 	for _, stopAuction := range stopAuctions {
 		go func(stopAuction models.LRPStopAuction) {
-			result, _ := ad.stopCommunicator(auctiontypes.StopAuctionRequest{
+			result := ad.stopCommunicator(auctiontypes.StopAuctionRequest{
 				LRPStopAuction: stopAuction,
 				RepGuids:       representatives,
 			})
