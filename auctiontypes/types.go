@@ -103,13 +103,15 @@ func NewStartAuctionInfoFromLRPStartAuction(auction models.LRPStartAuction) Star
 		DiskMB:       auction.DiskMB,
 		MemoryMB:     auction.MemoryMB,
 		Index:        auction.Index,
+		NumInstances: auction.NumInstances,
 	}
 }
 
 func NewStopAuctionInfoFromLRPStopAuction(auction models.LRPStopAuction) StopAuctionInfo {
 	return StopAuctionInfo{
-		ProcessGuid: auction.ProcessGuid,
-		Index:       auction.Index,
+		ProcessGuid:  auction.ProcessGuid,
+		Index:        auction.Index,
+		NumInstances: auction.NumInstances,
 	}
 }
 
@@ -142,6 +144,7 @@ type StartAuctionInfo struct {
 	DiskMB       int
 	MemoryMB     int
 	Index        int
+	NumInstances int
 }
 
 func (info StartAuctionInfo) LRPIdentifier() models.LRPIdentifier {
@@ -153,8 +156,9 @@ func (info StartAuctionInfo) LRPIdentifier() models.LRPIdentifier {
 }
 
 type StopAuctionInfo struct {
-	ProcessGuid string
-	Index       int
+	ProcessGuid  string
+	Index        int
+	NumInstances int
 }
 
 type SimulatedInstance struct {
