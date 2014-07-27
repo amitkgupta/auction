@@ -168,7 +168,7 @@ func buildInProcessReps() (auctiontypes.SimulationRepPoolClient, []string) {
 
 		repDelegate := simulationrepdelegate.New(
 			repResources,
-			int(math.Mod(float64(numReps), float64(numAZs))),
+			int(math.Mod(float64(i), float64(numAZs))),
 		)
 		repMap[repGuid] = auctionrep.New(repGuid, repDelegate)
 	}
