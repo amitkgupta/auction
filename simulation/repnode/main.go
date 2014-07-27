@@ -21,6 +21,7 @@ var diskMB = flag.Int("diskMB", 100, "total available disk in MB")
 var containers = flag.Int("containers", 100, "total available containers")
 var repGuid = flag.String("repGuid", "", "rep-guid")
 var natsAddrs = flag.String("natsAddrs", "", "nats server addresses")
+var azNumber = flag.Int("azNumber", -1, "number indicating which AZ this rep is running on")
 
 func main() {
 	flag.Parse()
@@ -33,11 +34,15 @@ func main() {
 		panic("need nats addr")
 	}
 
+	if *azNumber < 0 {
+		panic("needs (non-negative) AZ number")
+	}
+
 	repDelegate := simulationrepdelegate.New(auctiontypes.Resources{
 		MemoryMB:   *memoryMB,
 		DiskMB:     *diskMB,
 		Containers: *containers,
-	})
+	}, *azNumber)
 	rep := auctionrep.New(*repGuid, repDelegate)
 
 	if *natsAddrs != "" {
