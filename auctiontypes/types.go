@@ -104,6 +104,7 @@ func NewStartAuctionInfoFromLRPStartAuction(auction models.LRPStartAuction) Star
 		MemoryMB:     auction.MemoryMB,
 		Index:        auction.Index,
 		NumInstances: auction.NumInstances,
+		NumAZs:       auction.NumAZs,
 	}
 }
 
@@ -112,6 +113,7 @@ func NewStopAuctionInfoFromLRPStopAuction(auction models.LRPStopAuction) StopAuc
 		ProcessGuid:  auction.ProcessGuid,
 		Index:        auction.Index,
 		NumInstances: auction.NumInstances,
+		NumAZs:       auction.NumAZs,
 	}
 }
 
@@ -145,6 +147,7 @@ type StartAuctionInfo struct {
 	MemoryMB     int
 	Index        int
 	NumInstances int
+	NumAZs       int
 }
 
 func (info StartAuctionInfo) LRPIdentifier() models.LRPIdentifier {
@@ -159,6 +162,7 @@ type StopAuctionInfo struct {
 	ProcessGuid  string
 	Index        int
 	NumInstances int
+	NumAZs       int
 }
 
 type SimulatedInstance struct {

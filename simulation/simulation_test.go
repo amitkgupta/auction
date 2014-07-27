@@ -97,6 +97,12 @@ var _ = Describe("Start and Stop Auctions", func() {
 			n2INSTapps := []int{200, 1000}
 			n4INSTapps := []int{50, 200}
 
+			nXSapps := []int{1500, 6000}
+			nXLapps := []int{55, 220}
+
+			nSPFapps := []int{1500, 6000}
+			nHAapps := []int{55, 220}
+
 			for i := range nexec {
 				i := i
 
@@ -114,6 +120,39 @@ var _ = Describe("Start and Stop Auctions", func() {
 						}
 						report := auctionDistributor.HoldAuctionsFor(
 							"Cold start with variable memory requirements between apps",
+							nexec[i],
+							permutedInstances,
+							repGuids[:nexec[i]],
+							auctionrunner.DefaultStartAuctionRules,
+						)
+
+						visualization.PrintReport(
+							numAZs,
+							client,
+							report.AuctionResults,
+							repGuids[:nexec[i]],
+							report.AuctionDuration,
+							auctionrunner.DefaultStartAuctionRules,
+						)
+
+						svgReport.DrawReportCard(i, 0, report)
+						reports = append(reports, report)
+					})
+				})
+
+				Context("with a few very high-memory apps", func() {
+					It("should distribute evenly", func() {
+						instances := []models.LRPStartAuction{}
+
+						instances = append(instances, generateUniqueLRPStartAuctions(nXSapps[i], 1, 1)...)
+						instances = append(instances, generateUniqueLRPStartAuctions(nXLapps[i], 15, 1)...)
+
+						permutedInstances := make([]models.LRPStartAuction, len(instances))
+						for i, index := range util.R.Perm(len(instances)) {
+							permutedInstances[i] = instances[index]
+						}
+						report := auctionDistributor.HoldAuctionsFor(
+							"Cold start with a few very high-memory apps",
 							nexec[i],
 							permutedInstances,
 							repGuids[:nexec[i]],
@@ -167,6 +206,39 @@ var _ = Describe("Start and Stop Auctions", func() {
 						reports = append(reports, report)
 					})
 				})
+
+				Context("with a few very high-instance apps", func() {
+					It("should distribute evenly", func() {
+						instances := []models.LRPStartAuction{}
+
+						instances = append(instances, generateUniqueLRPStartAuctions(nSPFapps[i], 1, 1)...)
+						instances = append(instances, generateUniqueLRPStartAuctions(nHAapps[i], 1, 15)...)
+
+						permutedInstances := make([]models.LRPStartAuction, len(instances))
+						for i, index := range util.R.Perm(len(instances)) {
+							permutedInstances[i] = instances[index]
+						}
+						report := auctionDistributor.HoldAuctionsFor(
+							"Cold start with a few very high-instance apps",
+							nexec[i],
+							permutedInstances,
+							repGuids[:nexec[i]],
+							auctionrunner.DefaultStartAuctionRules,
+						)
+
+						visualization.PrintReport(
+							numAZs,
+							client,
+							report.AuctionResults,
+							repGuids[:nexec[i]],
+							report.AuctionDuration,
+							auctionrunner.DefaultStartAuctionRules,
+						)
+
+						svgReport.DrawReportCard(i, 0, report)
+						reports = append(reports, report)
+					})
+				})
 			}
 		})
 
@@ -174,22 +246,33 @@ var _ = Describe("Start and Stop Auctions", func() {
 			nexec := []int{100, 100}
 			nempty := []int{5, 1}
 			napps := []int{500, 100}
+			numInstancesPerNewLRP := 3
+			numInitialProcessPerNonEmptyRep := 50
 
 			for i := range nexec {
 				i := i
+				description := fmt.Sprintf(
+					"%d Executors, %d Initially Empty, %d Initially Running %d Process, %d New %d-Instance Processes",
+					nexec[i],
+					nempty[i],
+					nexec[i]-nempty[i],
+					numInitialProcessPerNonEmptyRep,
+					napps[i],
+					numInstancesPerNewLRP,
+				)
 
-				Context(fmt.Sprintf("%d Executors, %d Initially Empty, %d Process", nexec[i], nempty[i], napps[i]), func() {
+				Context(description, func() {
 					BeforeEach(func() {
 						for j := 0; j < nexec[i]-nempty[i]; j++ {
-							initialDistributions[j] = generateUniqueSingleIndexLRPsWithRedundantSimulatedInstances(50, 1)
+							initialDistributions[j] = generateUniqueSingleIndexLRPsWithRedundantSimulatedInstances(numInitialProcessPerNonEmptyRep, 1)
 						}
 					})
 
 					It("should distribute evenly", func() {
-						instances := generateUniqueLRPStartAuctions(napps[i], 1, 1)
+						instances := generateUniqueLRPStartAuctions(napps[i], 1, numInstancesPerNewLRP)
 
 						report := auctionDistributor.HoldAuctionsFor(
-							"Imbalanced scenario (e.g. a deploy)",
+							description,
 							nexec[i],
 							instances,
 							repGuids[:nexec[i]],
@@ -219,8 +302,14 @@ var _ = Describe("Start and Stop Auctions", func() {
 
 			for i := range nexec {
 				i := i
+				description := fmt.Sprintf(
+					"%d Executors, roughly %d Initial Processes per Executor, %d New Processes",
+					nexec[i],
+					maxInitialProcessesPerExecutor,
+					napps[i],
+				)
 
-				Context(fmt.Sprintf("%d Executors, roughly %d Initial Processes per Executor, %d New Processes", nexec[i], maxInitialProcessesPerExecutor, napps[i]), func() {
+				Context(description, func() {
 					BeforeEach(func() {
 						for j := 0; j < nexec[i]; j++ {
 							numInstances := util.RandomIntIn(maxInitialProcessesPerExecutor-2, maxInitialProcessesPerExecutor)
@@ -232,7 +321,7 @@ var _ = Describe("Start and Stop Auctions", func() {
 						instances := generateLRPStartAuctionsForProcessGuid(napps[i], "red", 1)
 
 						report := auctionDistributor.HoldAuctionsFor(
-							"The Watters demo",
+							description,
 							nexec[i],
 							instances,
 							repGuids[:nexec[i]],
