@@ -30,7 +30,7 @@ func (fake *FakeAuctionRunner) RunLRPStartAuction(arg1 StartAuctionRequest) Star
 	if fake.RunLRPStartAuctionStub != nil {
 		return fake.RunLRPStartAuctionStub(arg1)
 	} else {
-		return fake.runLRPStartAuctionReturns
+		return fake.RunLRPStartAuctionReturns
 	}
 }
 
