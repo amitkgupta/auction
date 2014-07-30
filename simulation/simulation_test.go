@@ -368,7 +368,6 @@ var _ = Describe("Start and Stop Auctions", func() {
 
 					results := auctionDistributor.HoldStopAuctions(stopAuctions, repGuids)
 					Ω(results).Should(HaveLen(1))
-					Ω(results[0].Error).ShouldNot(HaveOccurred())
 					Ω(results[0].Winner).Should(Equal("REP-2"))
 
 					instancesOn0 := client.SimulatedInstances(repGuids[0])
@@ -399,7 +398,6 @@ var _ = Describe("Start and Stop Auctions", func() {
 
 					results := auctionDistributor.HoldStopAuctions(stopAuctions, repGuids)
 					Ω(results).Should(HaveLen(1))
-					Ω(results[0].Error).ShouldNot(HaveOccurred())
 					Ω(results[0].Winner).Should(Equal("REP-1"))
 
 					instancesOn0 := client.SimulatedInstances(repGuids[0])
@@ -429,7 +427,6 @@ var _ = Describe("Start and Stop Auctions", func() {
 
 					results := auctionDistributor.HoldStopAuctions(stopAuctions, repGuids)
 					Ω(results).Should(HaveLen(1))
-					Ω(results[0].Error).ShouldNot(HaveOccurred())
 					Ω(results[0].Winner).Should(Equal("REP-2"))
 
 					instancesOn0 := client.SimulatedInstances(repGuids[0])
@@ -462,7 +459,6 @@ var _ = Describe("Start and Stop Auctions", func() {
 
 					results := auctionDistributor.HoldStopAuctions(stopAuctions, repGuids)
 					Ω(results).Should(HaveLen(1))
-					Ω(results[0].Error).ShouldNot(HaveOccurred())
 					Ω(results[0].Winner).Should(Equal("REP-2"))
 
 					instancesOn0 := client.SimulatedInstances(repGuids[0])
