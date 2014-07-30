@@ -45,13 +45,16 @@ var _ = Describe("Start and Stop Auctions", func() {
 
 	newLRPStartAuction := func(processGuid string, memoryMB int, index int, numInstances int) models.LRPStartAuction {
 		return models.LRPStartAuction{
-			ProcessGuid:  processGuid,
+			DesiredLRP: models.DesiredLRP{
+				ProcessGuid: processGuid,
+				MemoryMB:    memoryMB,
+				DiskMB:      1,
+				Instances:   numInstances,
+			},
+
 			InstanceGuid: util.NewGuid("INS"),
-			MemoryMB:     memoryMB,
-			DiskMB:       1,
 			Index:        index,
 			NumAZs:       numAZs,
-			NumInstances: numInstances,
 		}
 	}
 
